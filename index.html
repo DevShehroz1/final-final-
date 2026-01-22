@@ -11,33 +11,27 @@
     <meta http-equiv="Expires" content="0">
     
     <script>
-    // Force no-cache for this page - AGGRESSIVE VERSION
+    // Optimized cache prevention - runs only when needed
     (function() {
-        // Clear all caches immediately
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-            });
-        }
-        if ('caches' in window) {
-            caches.keys().then(function(names) {
-                for (let name of names) {
-                    caches.delete(name);
-                }
-            });
-        }
-        // Force reload if page is from cache
+        // Only clear caches if page was loaded from cache (not on every load)
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) {
+                // Page was loaded from cache - clear and reload
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        for(let registration of registrations) {
+                            registration.unregister();
+                        }
+                    });
+                }
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        for (let name of names) {
+                            caches.delete(name);
+                        }
+                    });
+                }
                 window.location.href = window.location.href.split('?')[0] + '?_v=' + Date.now();
-            }
-        });
-        // Prevent back button from showing cached version
-        window.addEventListener('unload', function() {
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState(null, '', window.location.href + (window.location.search ? '&' : '?') + '_t=' + Date.now());
             }
         });
     })();
@@ -72,6 +66,22 @@
     height: auto !important;
     object-fit: contain !important;
     object-position: left center !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+/* Hide any text elements that might be showing instead of logo image */
+[data-framer-name="Branding Subyect_logowit2"] *:not(img),
+.framer-6vy0se *:not(img) {
+    font-size: 0 !important;
+    color: transparent !important;
+    text-indent: -9999px !important;
+    overflow: hidden !important;
+}
+/* Force logo image to be visible and loaded */
+[data-framer-name="Branding Subyect_logowit2"] img,
+.framer-6vy0se img {
+    content: url('https://cdn.shopify.com/s/files/1/0653/3372/3209/files/Logo_Wide_-_SaveCustomer_-_2.png?v=1769075912') !important;
 }
 /* Force logo image to reload and prevent caching */
 [data-framer-name="Branding Subyect_logowit2"] img,
@@ -161,16 +171,21 @@
         }
     }
     
-    // Run immediately and also after delays to catch all instances
-    attachWhatsAppHandlers();
-    setTimeout(attachWhatsAppHandlers, 100);
-    setTimeout(attachWhatsAppHandlers, 500);
-    setTimeout(attachWhatsAppHandlers, 1000);
+    // Run once when DOM is ready (optimized - removed multiple calls)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(attachWhatsAppHandlers, 100);
+        });
+    } else {
+        setTimeout(attachWhatsAppHandlers, 100);
+    }
     
-    // Also watch for dynamically added elements
+    // Also watch for dynamically added elements (optimized - debounced)
     if (window.MutationObserver) {
+        var mutationTimeout;
         var observer = new MutationObserver(function(mutations) {
-            attachWhatsAppHandlers();
+            clearTimeout(mutationTimeout);
+            mutationTimeout = setTimeout(attachWhatsAppHandlers, 300);
         });
         observer.observe(document.body, { childList: true, subtree: true });
     }
@@ -180,11 +195,41 @@
 // FORCE LOGO IMAGE RELOAD - Prevents caching issues
 (function() {
     function forceLogoReload() {
-        // Find ALL logo images including those in hidden responsive variants
+        // Find ALL logo containers and images
+        var logoContainers = document.querySelectorAll('[data-framer-name="Branding Subyect_logowit2"], .framer-6vy0se, .framer-4ukd3k');
         var logoImages = document.querySelectorAll('img[src*="Logo_Wide"], img[srcset*="Logo_Wide"], [data-framer-name="Branding Subyect_logowit2"] img, .framer-6vy0se img, img[src*="FnDEi"], img[srcset*="FnDEi"]');
         var newLogoUrl = 'https://cdn.shopify.com/s/files/1/0653/3372/3209/files/Logo_Wide_-_SaveCustomer_-_2.png?v=1769075912';
         var cacheBuster = '&_cb=' + Date.now();
         
+        // First, ensure logo containers have images
+        logoContainers.forEach(function(container) {
+            var existingImg = container.querySelector('img');
+            if (!existingImg) {
+                // Create image if it doesn't exist
+                var img = document.createElement('img');
+                img.src = newLogoUrl + cacheBuster;
+                img.srcset = newLogoUrl + ' 1x, ' + newLogoUrl + ' 2x';
+                img.alt = 'Save Customer Logo';
+                img.style.cssText = 'display:block!important;max-width:100%!important;height:auto!important;object-fit:contain!important;object-position:left center!important;';
+                container.appendChild(img);
+            }
+            // Hide any text content in the container
+            var textNodes = container.childNodes;
+            for (var i = 0; i < textNodes.length; i++) {
+                if (textNodes[i].nodeType === 3 && textNodes[i].textContent.trim()) {
+                    textNodes[i].textContent = '';
+                }
+            }
+            // Hide text elements
+            var textElements = container.querySelectorAll('p, span, div, h1, h2, h3, h4, h5, h6');
+            textElements.forEach(function(el) {
+                if (el.tagName !== 'IMG' && !el.querySelector('img')) {
+                    el.style.cssText = 'display:none!important;font-size:0!important;color:transparent!important;';
+                }
+            });
+        });
+        
+        // Then update all existing logo images
         logoImages.forEach(function(img) {
             // Replace old logo URLs with new one
             var needsUpdate = false;
@@ -228,11 +273,20 @@
                 }
             }
             
+            // Always ensure image is visible and has correct URL
+            if (!img.src || img.src.indexOf('Logo_Wide') === -1) {
+                img.src = newLogoUrl + cacheBuster;
+                needsUpdate = true;
+            }
+            
+            // Force image to be visible
+            img.style.cssText += 'display:block!important;visibility:visible!important;opacity:1!important;max-width:100%!important;height:auto!important;';
+            
             // Force browser to reload image if updated
             if (needsUpdate) {
                 img.style.display = 'none';
                 img.offsetHeight; // Trigger reflow
-                img.style.display = '';
+                img.style.display = 'block';
                 // Also force reload by removing and re-adding src
                 var tempSrc = img.src;
                 img.src = '';
@@ -241,38 +295,35 @@
         });
     }
     
-    // Run immediately when DOM is ready
+    // Run once when DOM is ready (optimized - removed multiple calls)
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            forceLogoReload();
-            // Also run after a short delay to catch any dynamically loaded images
             setTimeout(forceLogoReload, 100);
-            setTimeout(forceLogoReload, 500);
         });
     } else {
-        forceLogoReload();
         setTimeout(forceLogoReload, 100);
-        setTimeout(forceLogoReload, 500);
     }
     
-    // Watch for dynamically added logo images
+    // Watch for dynamically added logo images (optimized - debounced)
     if (window.MutationObserver) {
+        var mutationTimeout;
         var observer = new MutationObserver(function(mutations) {
             var hasLogo = false;
             mutations.forEach(function(mutation) {
                 mutation.addedNodes.forEach(function(node) {
                     if (node.nodeType === 1) {
-                        if (node.tagName === 'IMG' && (node.src && node.src.indexOf('Logo_Wide') !== -1 || node.srcset && node.srcset.indexOf('Logo_Wide') !== -1)) {
+                        if (node.tagName === 'IMG' && (node.src && (node.src.indexOf('Logo_Wide') !== -1 || node.src.indexOf('FnDEi') !== -1) || node.srcset && (node.srcset.indexOf('Logo_Wide') !== -1 || node.srcset.indexOf('FnDEi') !== -1))) {
                             hasLogo = true;
                         }
-                        if (node.querySelectorAll && node.querySelectorAll('img[src*="Logo_Wide"], img[srcset*="Logo_Wide"]').length > 0) {
+                        if (node.querySelectorAll && node.querySelectorAll('img[src*="Logo_Wide"], img[srcset*="Logo_Wide"], img[src*="FnDEi"]').length > 0) {
                             hasLogo = true;
                         }
                     }
                 });
             });
             if (hasLogo) {
-                setTimeout(forceLogoReload, 50);
+                clearTimeout(mutationTimeout);
+                mutationTimeout = setTimeout(forceLogoReload, 200);
             }
         });
         observer.observe(document.body, { childList: true, subtree: true });
@@ -287,20 +338,16 @@
         });
     }
     
-    // Listen for window resize events (when switching between desktop/tablet/mobile)
+    // Listen for window resize events (optimized - debounced, runs once)
     var resizeTimeout;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(function() {
             forceLogoReload();
-            // Run multiple times to catch all responsive variants
-            setTimeout(forceLogoReload, 100);
-            setTimeout(forceLogoReload, 300);
-            setTimeout(forceLogoReload, 500);
-        }, 150);
+        }, 300);
     });
     
-    // Listen for media query changes
+    // Listen for media query changes (optimized - runs once)
     if (window.matchMedia) {
         var mediaQueries = [
             window.matchMedia('(min-width: 1200px)'),
@@ -308,26 +355,35 @@
             window.matchMedia('(max-width: 809.98px)')
         ];
         
+        var mediaQueryTimeout;
         mediaQueries.forEach(function(mq) {
-            mq.addListener(function() {
-                forceLogoReload();
-                setTimeout(forceLogoReload, 100);
-                setTimeout(forceLogoReload, 300);
-            });
+            if (mq.addListener) {
+                mq.addListener(function() {
+                    clearTimeout(mediaQueryTimeout);
+                    mediaQueryTimeout = setTimeout(forceLogoReload, 200);
+                });
+            } else if (mq.addEventListener) {
+                mq.addEventListener('change', function() {
+                    clearTimeout(mediaQueryTimeout);
+                    mediaQueryTimeout = setTimeout(forceLogoReload, 200);
+                });
+            }
         });
     }
     
-    // Also run on visibility change (when tab becomes active)
+    // Also run on visibility change (when tab becomes active) - only once
+    var visibilityHandled = false;
     document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) {
-            forceLogoReload();
+        if (!document.hidden && !visibilityHandled) {
+            visibilityHandled = true;
+            setTimeout(forceLogoReload, 100);
         }
     });
     
-    // Run periodically to catch any missed instances
-    setInterval(function() {
-        forceLogoReload();
-    }, 2000);
+    // Run once after page is fully loaded (not every 2 seconds)
+    window.addEventListener('load', function() {
+        setTimeout(forceLogoReload, 1000);
+    });
 })();
 </script>
 
@@ -1211,58 +1267,42 @@ fbq('track', 'PageView');
 </div>
     <!-- Start of bodyEnd -->
     <script>
-    // AGGRESSIVE cache prevention - ensures fresh load every time
+    // Optimized cache prevention - only runs when page is from cache
     (function() {
+        // Only check version on initial load, not every time
         var version = 'v3.0-' + Date.now();
-        localStorage.setItem('page_version', version);
-        
-        // Check if this is a cached version
         var storedVersion = localStorage.getItem('page_version');
-        if (storedVersion && storedVersion !== version) {
+        
+        // Check if this is a cached version (only reload if version changed)
+        if (storedVersion && storedVersion !== version && !window.location.search.includes('_v=')) {
+            localStorage.setItem('page_version', version);
             window.location.reload(true);
             return;
         }
         
-        // Add cache-busting parameter
-        if (window.location.search.indexOf('_v=') === -1 && window.location.search.indexOf('_nocache') === -1) {
-            var separator = window.location.search ? '&' : '?';
-            var newUrl = window.location.href.split('#')[0] + separator + '_v=' + Date.now();
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState({}, '', newUrl);
-            }
-        }
+        localStorage.setItem('page_version', version);
         
-        // Clear service worker cache
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-            });
-        }
-        
-        // Clear browser cache
-        if ('caches' in window) {
-            caches.keys().then(function(names) {
-                for (let name of names) {
-                    caches.delete(name);
-                }
-            });
-        }
-        
-        // Force reload if page loaded from cache
+        // Force reload if page loaded from cache (only when needed)
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) {
+                // Only clear caches if page was actually from cache
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        for(let registration of registrations) {
+                            registration.unregister();
+                        }
+                    });
+                }
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        for (let name of names) {
+                            caches.delete(name);
+                        }
+                    });
+                }
                 window.location.href = window.location.href.split('?')[0].split('#')[0] + '?_force=' + Date.now();
             }
         });
-        
-        // Prevent browser from caching this page
-        if (window.performance && window.performance.navigation) {
-            if (window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
-                window.location.reload(true);
-            }
-        }
     })();
     </script>
     <!-- End of bodyEnd -->
