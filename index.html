@@ -6,82 +6,27 @@
 <!-- Mirrored from www.subyect.com/ by HTTrack Website Copier/3.x [XR&CO'2014], Thu, 22 Jan 2026 16:07:59 GMT -->
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="cache-control" content="no-cache">
-    <meta name="expires" content="0">
-    <meta name="pragma" content="no-cache">
     
     <script>
-    // ULTRA AGGRESSIVE cache prevention - FORCE FRESH LOAD
-    (function() {
-        var FORCE_VERSION = '2.0.1';
-        var VERSION_KEY = 'page_force_version';
-        
-        // Immediately check and force reload if version mismatch
-        var currentVersion = sessionStorage.getItem(VERSION_KEY);
-        if (currentVersion !== FORCE_VERSION) {
-            sessionStorage.clear();
-            localStorage.removeItem(VERSION_KEY);
-            sessionStorage.setItem(VERSION_KEY, FORCE_VERSION);
-            
-            // Clear ALL caches
-            if ('caches' in window) {
-                caches.keys().then(function(names) {
-                    names.forEach(function(name) {
-                        caches.delete(name);
-                    });
-                });
-            }
-            
-            // Unregister ALL service workers
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    registrations.forEach(function(registration) {
-                        registration.unregister();
-                    });
-                });
-            }
-            
-            // Force hard reload with cache bypass
-            var url = window.location.href.split('?')[0];
-            var separator = '?';
-            if (window.location.search) {
-                separator = '&';
-            }
-            window.location.replace(url + separator + '_v=' + FORCE_VERSION + '&_nocache=' + Date.now() + '&_r=' + Math.random());
-            return;
-        }
-        
-        // On every page load, add timestamp to prevent caching
-        var urlParams = new URLSearchParams(window.location.search);
-        urlParams.set('_t', Date.now());
-        var newUrl = window.location.pathname + '?' + urlParams.toString();
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState({}, '', newUrl);
-        }
-        
-        // Force reload if page loaded from cache
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted) {
-                window.location.reload(true);
+    // Force no-cache for this page
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister();
             }
         });
-        
-        // Detect if page loaded too fast (likely from cache)
-        var loadStart = performance.now();
-        window.addEventListener('load', function() {
-            var loadTime = performance.now() - loadStart;
-            if (loadTime < 50) {
-                // Page loaded suspiciously fast, likely from cache
-                setTimeout(function() {
-                    window.location.reload(true);
-                }, 100);
+    }
+    // Clear cache on load
+    if ('caches' in window) {
+        caches.keys().then(function(names) {
+            for (let name of names) {
+                caches.delete(name);
             }
         });
-    })();
+    }
     </script>
     <script>try{if(localStorage.get("__framer_force_showing_editorbar_since")){const n=document.createElement("link");n.rel = "modulepreload";n.href="https://framer.com/edit/init.mjs";document.head.appendChild(n)}}catch(e){}</script>
     <!-- Start of headStart -->
@@ -971,40 +916,18 @@ fbq('track', 'PageView');
 </div>
     <!-- Start of bodyEnd -->
     <script>
-    // AGGRESSIVE cache prevention - Version 2.0
+    // Prevent caching and force fresh load
     (function() {
-        var VERSION = '2.0';
-        var VERSION_KEY = 'page_version';
-        
-        // Check version and force reload if different
-        var storedVersion = sessionStorage.getItem(VERSION_KEY);
-        if (storedVersion !== VERSION) {
-            sessionStorage.setItem(VERSION_KEY, VERSION);
-            // Clear all caches
-            if ('caches' in window) {
-                caches.keys().then(function(names) {
-                    for (let name of names) {
-                        caches.delete(name);
-                    }
-                });
-            }
-            // Force hard reload
-            if (window.location.search.indexOf('_v=') === -1) {
-                var separator = window.location.search ? '&' : '?';
-                window.location.href = window.location.href.split('?')[0] + separator + '_v=' + VERSION + '&_t=' + Date.now();
-                return;
+        // Add cache-busting parameter to prevent browser caching
+        if (window.location.search.indexOf('_nocache') === -1) {
+            var separator = window.location.search ? '&' : '?';
+            var newUrl = window.location.href + separator + '_nocache=' + Date.now();
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({}, '', newUrl);
             }
         }
         
-        // Add cache-busting parameter on every load
-        var urlParams = new URLSearchParams(window.location.search);
-        urlParams.set('_t', Date.now());
-        var newUrl = window.location.pathname + '?' + urlParams.toString();
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState({}, '', newUrl);
-        }
-        
-        // Clear service worker cache
+        // Clear any service worker cache
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
                 for(let registration of registrations) {
@@ -1013,25 +936,10 @@ fbq('track', 'PageView');
             });
         }
         
-        // Force reload if page is from cache (back/forward)
+        // Force reload if page is from cache
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) {
-                window.location.reload(true);
-            }
-        });
-        
-        // Prevent browser from caching this page
-        window.addEventListener('beforeunload', function() {
-            sessionStorage.setItem('last_load', Date.now());
-        });
-        
-        // Double-check on load
-        window.addEventListener('load', function() {
-            var lastLoad = sessionStorage.getItem('last_load');
-            var now = Date.now();
-            if (lastLoad && (now - parseInt(lastLoad)) < 100) {
-                // Page loaded too quickly, likely from cache
-                window.location.reload(true);
+                window.location.reload();
             }
         });
     })();
