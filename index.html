@@ -58,21 +58,46 @@
 .framer-1mczbbk:focus {
     background: linear-gradient(104deg, rgba(0, 71, 52, 0.85) -5%, rgba(71, 191, 93, 0.8) 51.513899689770234%, rgba(129, 212, 144, 0.8) 115.00000000000001%) !important;
 }
-/* Ensure logo displays properly on all devices */
+/* Ensure logo container doesn't clip the image */
 [data-framer-name="Branding Subyect_logowit2"],
+.framer-6vy0se,
+.framer-4ukd3k {
+    overflow: visible !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+}
+/* Ensure logo displays properly on all devices - full image visible */
 [data-framer-name="Branding Subyect_logowit2"] img,
-.framer-6vy0se img {
+.framer-6vy0se img,
+.framer-4ukd3k img {
+    width: auto !important;
     max-width: 100% !important;
     height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     object-fit: contain !important;
     object-position: left center !important;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    image-rendering: auto !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    transform: none !important;
+    clip-path: none !important;
+    clip: auto !important;
 }
 /* Hide any text elements that might be showing instead of logo image */
 [data-framer-name="Branding Subyect_logowit2"] *:not(img),
-.framer-6vy0se *:not(img) {
+.framer-6vy0se *:not(img),
+.framer-4ukd3k *:not(img) {
     font-size: 0 !important;
     color: transparent !important;
     text-indent: -9999px !important;
@@ -80,36 +105,60 @@
 }
 /* Force logo image to be visible and loaded */
 [data-framer-name="Branding Subyect_logowit2"] img,
-.framer-6vy0se img {
+.framer-6vy0se img,
+.framer-4ukd3k img {
     content: url('https://cdn.shopify.com/s/files/1/0653/3372/3209/files/Logo_Wide_-_SaveCustomer_-_2.png?v=1769075912') !important;
 }
-/* Force logo image to reload and prevent caching */
-[data-framer-name="Branding Subyect_logowit2"] img,
-.framer-6vy0se img {
-    image-rendering: -webkit-optimize-contrast !important;
-    -webkit-backface-visibility: hidden !important;
-    backface-visibility: hidden !important;
-}
-/* Responsive logo sizing */
+/* Responsive logo sizing - ensure full logo is visible */
 @media (min-width: 1200px) {
     [data-framer-name="Branding Subyect_logowit2"] img,
-    .framer-6vy0se img {
-        max-width: 180px !important;
+    .framer-6vy0se img,
+    .framer-4ukd3k img {
+        width: auto !important;
+        max-width: 200px !important;
+        min-width: 150px !important;
+        height: auto !important;
+    }
+    [data-framer-name="Branding Subyect_logowit2"],
+    .framer-6vy0se,
+    .framer-4ukd3k {
+        width: auto !important;
+        max-width: 200px !important;
         min-width: 150px !important;
     }
 }
 @media (min-width: 810px) and (max-width: 1199.98px) {
     [data-framer-name="Branding Subyect_logowit2"] img,
-    .framer-6vy0se img {
-        max-width: 150px !important;
-        min-width: 120px !important;
+    .framer-6vy0se img,
+    .framer-4ukd3k img {
+        width: auto !important;
+        max-width: 170px !important;
+        min-width: 130px !important;
+        height: auto !important;
+    }
+    [data-framer-name="Branding Subyect_logowit2"],
+    .framer-6vy0se,
+    .framer-4ukd3k {
+        width: auto !important;
+        max-width: 170px !important;
+        min-width: 130px !important;
     }
 }
 @media (max-width: 809.98px) {
     [data-framer-name="Branding Subyect_logowit2"] img,
-    .framer-6vy0se img {
-        max-width: 120px !important;
-        min-width: 100px !important;
+    .framer-6vy0se img,
+    .framer-4ukd3k img {
+        width: auto !important;
+        max-width: 140px !important;
+        min-width: 110px !important;
+        height: auto !important;
+    }
+    [data-framer-name="Branding Subyect_logowit2"],
+    .framer-6vy0se,
+    .framer-4ukd3k {
+        width: auto !important;
+        max-width: 140px !important;
+        min-width: 110px !important;
     }
 }
 </style>
@@ -201,8 +250,11 @@
         var newLogoUrl = 'https://cdn.shopify.com/s/files/1/0653/3372/3209/files/Logo_Wide_-_SaveCustomer_-_2.png?v=1769075912';
         var cacheBuster = '&_cb=' + Date.now();
         
-        // First, ensure logo containers have images
+        // First, ensure logo containers have images and proper styling
         logoContainers.forEach(function(container) {
+            // Fix container styles to prevent clipping
+            container.style.cssText += 'overflow:visible!important;width:auto!important;max-width:none!important;height:auto!important;min-height:0!important;max-height:none!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;';
+            
             var existingImg = container.querySelector('img');
             if (!existingImg) {
                 // Create image if it doesn't exist
@@ -210,7 +262,7 @@
                 img.src = newLogoUrl + cacheBuster;
                 img.srcset = newLogoUrl + ' 1x, ' + newLogoUrl + ' 2x';
                 img.alt = 'Save Customer Logo';
-                img.style.cssText = 'display:block!important;max-width:100%!important;height:auto!important;object-fit:contain!important;object-position:left center!important;';
+                img.style.cssText = 'width:auto!important;max-width:100%!important;height:auto!important;object-fit:contain!important;object-position:left center!important;display:block!important;visibility:visible!important;opacity:1!important;image-rendering:auto!important;transform:none!important;clip-path:none!important;clip:auto!important;';
                 container.appendChild(img);
             }
             // Hide any text content in the container
@@ -279,8 +331,14 @@
                 needsUpdate = true;
             }
             
-            // Force image to be visible
-            img.style.cssText += 'display:block!important;visibility:visible!important;opacity:1!important;max-width:100%!important;height:auto!important;';
+            // Force image to be visible and properly sized - prevent clipping and blur
+            img.style.cssText += 'width:auto!important;max-width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;display:block!important;visibility:visible!important;opacity:1!important;object-fit:contain!important;object-position:left center!important;image-rendering:auto!important;transform:none!important;clip-path:none!important;clip:auto!important;';
+            
+            // Also ensure parent container doesn't clip
+            var parent = img.parentElement;
+            if (parent) {
+                parent.style.cssText += 'overflow:visible!important;width:auto!important;max-width:none!important;height:auto!important;min-height:0!important;max-height:none!important;';
+            }
             
             // Force browser to reload image if updated
             if (needsUpdate) {
