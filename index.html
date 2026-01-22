@@ -176,6 +176,91 @@
     }
 })();
 </script>
+<script>
+// FORCE LOGO IMAGE RELOAD - Prevents caching issues
+(function() {
+    function forceLogoReload() {
+        var logoImages = document.querySelectorAll('img[src*="Logo_Wide"], img[srcset*="Logo_Wide"], [data-framer-name="Branding Subyect_logowit2"] img, .framer-6vy0se img');
+        var cacheBuster = '&_cb=' + Date.now();
+        
+        logoImages.forEach(function(img) {
+            // Force reload by updating src with cache buster
+            if (img.src && img.src.indexOf('Logo_Wide') !== -1) {
+                var newSrc = img.src.split('&_cb=')[0].split('?_cb=')[0];
+                if (newSrc.indexOf('?') === -1) {
+                    newSrc += '?';
+                } else {
+                    newSrc += '&';
+                }
+                newSrc += '_cb=' + Date.now();
+                img.src = newSrc;
+            }
+            
+            // Force reload by updating srcset
+            if (img.srcset && img.srcset.indexOf('Logo_Wide') !== -1) {
+                var newSrcset = img.srcset.replace(/([?&])_cb=\d+/g, '');
+                if (newSrcset.indexOf('?') === -1) {
+                    newSrcset = newSrcset.replace(/(Logo_Wide[^" ]+)/g, '$1?' + cacheBuster);
+                } else {
+                    newSrcset = newSrcset.replace(/(Logo_Wide[^" ]+)/g, '$1&' + cacheBuster);
+                }
+                img.srcset = newSrcset;
+            }
+            
+            // Force browser to reload image
+            img.style.display = 'none';
+            img.offsetHeight; // Trigger reflow
+            img.style.display = '';
+        });
+    }
+    
+    // Run immediately when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            forceLogoReload();
+            // Also run after a short delay to catch any dynamically loaded images
+            setTimeout(forceLogoReload, 100);
+            setTimeout(forceLogoReload, 500);
+        });
+    } else {
+        forceLogoReload();
+        setTimeout(forceLogoReload, 100);
+        setTimeout(forceLogoReload, 500);
+    }
+    
+    // Watch for dynamically added logo images
+    if (window.MutationObserver) {
+        var observer = new MutationObserver(function(mutations) {
+            var hasLogo = false;
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                        if (node.tagName === 'IMG' && (node.src && node.src.indexOf('Logo_Wide') !== -1 || node.srcset && node.srcset.indexOf('Logo_Wide') !== -1)) {
+                            hasLogo = true;
+                        }
+                        if (node.querySelectorAll && node.querySelectorAll('img[src*="Logo_Wide"], img[srcset*="Logo_Wide"]').length > 0) {
+                            hasLogo = true;
+                        }
+                    }
+                });
+            });
+            if (hasLogo) {
+                setTimeout(forceLogoReload, 50);
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+    
+    // Prevent image caching via service worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(registration) {
+                registration.update();
+            });
+        });
+    }
+})();
+</script>
 
 <!-- Meta Pixel Code -->
 <script>
